@@ -328,6 +328,16 @@ test("should handle array values in query object", () => {
   );
 });
 
+test("should handle valueless keys with same-key valued entries", () => {
+  expect(urlMerge("http://google.com?foo&foo=1")).toBe(
+    "http://google.com?foo&foo=1",
+  );
+
+  expect(urlMerge("http://google.com?foo", { query: { foo: "2" } })).toBe(
+    "http://google.com?foo=2",
+  );
+});
+
 test("should keep leading slash and remove trailing slash", () => {
   const options = { leadingSlash: "keep" as const };
 

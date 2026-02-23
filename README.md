@@ -47,6 +47,13 @@ urlMerge("http://example.com", "foo", "?page=1");
 // => 'http://example.com/foo?page=1'
 ```
 
+Valueless query keys are preserved:
+
+```typescript
+urlMerge("http://example.com?debug");
+// => 'http://example.com?debug'
+```
+
 ### Adding query parameters via options
 
 ```typescript

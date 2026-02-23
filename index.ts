@@ -105,60 +105,80 @@ const buildUrl = (
     url += "/";
   }
 
-  // Build a query object based on the url query string and options query object
   const suffixStr = suffix.replace(/^\?/, "");
 
-  // Parse existing query string, preserving valueless keys
-  const existingQuery: Map<string, string | null> = new Map();
+  // Parse existing query string while preserving valueless keys (e.g. ?flag).
+  const queryParams = new URLSearchParams();
+  const valuelessKeys = new Set<string>();
+
   if (suffixStr) {
     for (const part of suffixStr.split("&")) {
+      if (!part) {
+        continue;
+      }
+
       const eqIndex = part.indexOf("=");
       if (eqIndex === -1) {
-        // Key without value
-        existingQuery.set(decodeURIComponent(part), null);
+        valuelessKeys.add(decodeURIComponent(part));
       } else {
         const key = decodeURIComponent(part.slice(0, eqIndex));
         const value = decodeURIComponent(part.slice(eqIndex + 1));
-        existingQuery.set(key, value);
+        queryParams.append(key, value);
       }
     }
   }
 
-  // Merge with options.query
+  // Merge with options.query (option values replace existing key values).
   if (options.query) {
     for (const [key, value] of Object.entries(options.query)) {
-      // Handle arrays by converting to URLSearchParams format later
+      queryParams.delete(key);
+      valuelessKeys.delete(key);
+
       if (Array.isArray(value)) {
-        // For arrays, we'll handle specially in stringify
-        existingQuery.set(key, value.map(String).join("\0"));
+        for (const item of value) {
+          queryParams.append(key, String(item));
+        }
       } else {
-        existingQuery.set(key, String(value));
+        queryParams.append(key, String(value));
       }
     }
   }
 
-  // Sort keys and stringify
-  const sortedKeys = [...existingQuery.keys()].sort();
+  // Sort query entries by key while preserving relative order for duplicate keys.
+  queryParams.sort();
+
+  const valuedEntries: Array<{ key: string; value: string }> = [];
+  for (const [key, value] of queryParams.entries()) {
+    valuedEntries.push({ key, value });
+  }
+
+  const valuelessEntries = [...valuelessKeys]
+    .sort()
+    .map((key) => ({ key, value: null as null }));
+
+  // Merge valueless and valued entries in sorted key order.
   const queryParts: string[] = [];
+  let valuedIdx = 0;
+  let valuelessIdx = 0;
 
-  for (const key of sortedKeys) {
-    const value = existingQuery.get(key);
-    const encodedKey = encodeURIComponent(key);
+  while (
+    valuedIdx < valuedEntries.length ||
+    valuelessIdx < valuelessEntries.length
+  ) {
+    const valued = valuedEntries[valuedIdx];
+    const valueless = valuelessEntries[valuelessIdx];
 
-    if (value === undefined) {
-      // Should not happen, but satisfy TypeScript
-      continue;
-    } else if (value === null) {
-      // Valueless key
-      queryParts.push(encodedKey);
-    } else if (value.includes("\0")) {
-      // Array value (joined with null char)
-      const values = value.split("\0");
-      for (const v of values) {
-        queryParts.push(`${encodedKey}=${encodeURIComponent(v)}`);
-      }
+    const useValueless =
+      !valued || (valueless && valueless.key <= valued.key);
+
+    if (useValueless) {
+      queryParts.push(encodeURIComponent(valueless.key));
+      valuelessIdx += 1;
     } else {
-      queryParts.push(`${encodedKey}=${encodeURIComponent(value)}`);
+      queryParts.push(
+        `${encodeURIComponent(valued.key)}=${encodeURIComponent(valued.value)}`,
+      );
+      valuedIdx += 1;
     }
   }
 
