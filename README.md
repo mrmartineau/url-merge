@@ -8,15 +8,15 @@ Based on [proper-url-join](https://github.com/moxystudio/js-proper-url-join) but
 
 ```bash
 bun add url-merge
-yarn add url-joiner
-npm install url-joiner
-pnpm add url-joiner
+yarn add url-merge
+npm install url-merge
+pnpm add url-merge
 ```
 
 ## Usage
 
 ```typescript
-import urlMerge from "url-joiner";
+import urlMerge from "url-merge";
 
 urlMerge("http://example.com", "foo", "bar");
 // => 'http://example.com/foo/bar'
@@ -159,7 +159,7 @@ Type: `object`
 
 ##### leadingSlash
 
-Type: `boolean | 'keep'`  
+Type: `boolean | 'keep'`
 Default: `true`
 
 - `true` - Always add a leading slash
@@ -168,7 +168,7 @@ Default: `true`
 
 ##### trailingSlash
 
-Type: `boolean | 'keep'`  
+Type: `boolean | 'keep'`
 Default: `false`
 
 - `true` - Always add a trailing slash
@@ -177,14 +177,14 @@ Default: `false`
 
 ##### protocolRelative
 
-Type: `boolean`  
+Type: `boolean`
 Default: `false`
 
 When `true`, treats `//` at the start as a protocol-relative URL (e.g., `//cdn.example.com`).
 
 ##### query
 
-Type: `Record<string, string | number | boolean | Array<string | number | boolean>>`  
+Type: `Record<string, string | number | boolean | Array<string | number | boolean>>`
 Default: `undefined`
 
 Query parameters to append to the URL. These are merged with any existing query string. Keys are sorted alphabetically in the output.
